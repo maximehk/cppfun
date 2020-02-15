@@ -5,33 +5,25 @@
 void PrintVector();
 
 struct Data {
-  explicit Data(int val) : val(val), old_val(val){};
+  explicit Data(int val) : val(val){};
   Data(const Data& other) = delete;
-  Data(Data&& other) {
-    if (val != -1) {
-      std::cout << "Overwrite " << val << std::endl;
-    }
-    val = other.val;
-    other.val = -1;
-    std::cout << "Moved " << val << std::endl;
-    PrintVector();
-  }
+  Data(Data&& other) { *this = std::move(other); }
   Data& operator=(Data&& other) {
-    if (val != -1) {
-      std::cout << "Overwrite " << val << std::endl;
-    }
+    int previous_val = val;
     val = other.val;
     other.val = -1;
-    std::cout << "Moved " << val << std::endl;
+    if (previous_val != -1) {
+      std::cout << "Overwrite " << previous_val << " with " << val << std::endl;
+    } else {
+      std::cout << "Moved " << val << std::endl;
+    }
     PrintVector();
     return *this;
   }
-  ~Data() { std::cout << "Destructor called on " << old_val << std::endl; }
+  static bool IsEven(const Data& d) { return d.val % 2 == 0; }
 
   int val;
-  int old_val;
 };
-bool IsEven(const Data& d) { return d.val % 2 == 0; }
 
 static std::vector<Data>* vec;
 
@@ -45,6 +37,9 @@ int main() {
   vec->reserve(20);
   for (int i = 0; i < 20; i++) vec->emplace_back(i);
   PrintVector();
-  vec->erase(std::remove_if(vec->begin(), vec->end(), IsEven), vec->end());
+  vec->erase(std::remove_if(vec->begin(), vec->end(), Data::IsEven),
+             vec->end());
   PrintVector();
+  delete vec;
+  return 0;
 }
